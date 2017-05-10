@@ -4,21 +4,20 @@ from salesforce_reporting import Connection, ReportParser
 import datetime
 import smtplib
 
-# change this based on the computer it is being ran from ('jrubin2','jrubin','jonathanrubin')
+# change this based on the computer it is being ran from ('compName1','compName2')
 computer = input("What computer are you on?")
 #dayOfWeek = input("Was yesterday a workday? Enter 'no' if not.")
 #pword = input("What is your password")
 
-sf = Connection(username='my@email', password='myPassword', security_token='myToken')
+sf = Connection(username='my@email.com', password='myPassword', security_token='myToken')
 
 # New Opportunities from Salesforce (2 reports since Salesforce doesn't allow for '3 days prior' for Monday)
 
-# IF today is not Monday (0), then run salesforce reports for yesterday. 
-# ELSE, will pull sf reports with manually set dates since SF does not have ability
-# to set a 3-day trailing date. 
+# if today is not Monday (0), then run salesforce reports for yesterday. 
+# else, will pull sf reports with manual
 
 if datetime.datetime.today().weekday() != 0:
-    yesterdayOpps = '00O14000008uelo'
+    yesterdayOpps = '00O14000008ywre'
     oppsSf = sf.get_report(yesterdayOpps, details=True)
     oppsParser = ReportParser(oppsSf)
     opps = oppsParser.records()
@@ -77,7 +76,7 @@ if datetime.datetime.today().weekday() != 0:
     
     yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
     yesterday = yesterday.strftime('%B-%d')
-    xlOpen.save('/Users/' + computer + '/Google Drive/OB Daily Reports/OB-ISR ' + yesterday + '.xlsx')
+    xlOpen.save('/Users/' + computer + '/Google Drive/OB Daily Reports/' + yesterday + ' OB-ISR.xlsx')
     
     
     smtpObj = smtplib.SMTP('smtp.gmail.com', 587)
@@ -86,12 +85,12 @@ if datetime.datetime.today().weekday() != 0:
 
 #should call input to require password to be entered
 
-    smtpObj.login('jonathan.rubin@vonage.com', 'Welcome!3')
+    smtpObj.login('my@email.com', 'myPassword')
 #can use list of strings for multiple email addresses. save as object and replace singular email
 
     hyperlinkDrive = 'https://drive.google.com/drive/folders/0ByBUMjHVt7glV042SU96ZHhqTEU'
-    recipients = ['my@email.com','others@email.com']
-    smtpObj.sendmail('my@email.com',recipients,
+    recipients = ['email1@address.com','email2address.com']
+    smtpObj.sendmail('jonathan.rubin@vonage.com',recipients,
 	'Subject: Daily Report\nHello,\n\nYou can find the updated report in the Google Drive folder:\n\n' + hyperlinkDrive + '\n\nThanks,\nJonathan')
 
 #disconnects from server
@@ -99,13 +98,12 @@ if datetime.datetime.today().weekday() != 0:
 
 
 else:
-    manualOpps = '00O14000008yuzH'
+    manualOpps = '00O14000008ywrj'
     oppsSf = sf.get_report(manualOpps, details=True)
     oppsParser = ReportParser(oppsSf)
     opps = oppsParser.records()
 
-### Cleaned up turning the $'s into a float and removing the "$" without pandas
-
+    
 # Closed Organic Opps from Salesforce
     manualOrganic = '00O14000008yuzM'
     organicSf = sf.get_report(manualOrganic, details=True)
@@ -158,7 +156,7 @@ else:
 
     friday = datetime.datetime.now() - datetime.timedelta(days=1)
     friday = friday.strftime('%B-%d')
-    xlOpen.save('/Users/' + computer + '/Google Drive/OB Daily Reports/OB-ISR ' + friday + '.xlsx')
+    xlOpen.save('/Users/' + computer + '/Google Drive/OB Daily Reports/'+ friday + ' OB-ISR.xlsx')
     
     
     smtpObj = smtplib.SMTP('smtp.gmail.com', 587)
@@ -167,15 +165,13 @@ else:
 
 #should call input to require password to be entered
 
-    smtpObj.login('my@email', 'myPassword')
+    smtpObj.login('my@email.com', 'myPassword')
 #can use list of strings for multiple email addresses. save as object and replace singular email
 
     hyperlinkDrive = 'https://drive.google.com/drive/folders/0ByBUMjHVt7glV042SU96ZHhqTEU'
-    recipients = ['my@email.com','others@email.com']
-    smtpObj.sendmail('jonathan.rubin@vonage.com',recipients,
-	'Subject: Daily Report\nHello,\n\n (Testing) You can find the updated report in the Google Drive folder:\n\n' + hyperlinkDrive + '\n\nThanks,\nJonathan')
+    recipients = ['email1@address.com','email2address.com']
+    smtpObj.sendmail('my@email',recipients,
+	'Subject: Daily Report\nHello,\n\n You can find the updated report in the Google Drive folder:\n\n' + hyperlinkDrive + '\n\n From that link, you can open in with Google Sheets or Excel. Or you can just download and then open with Excel.\n\nThanks,\nJonathan')
 
 #disconnects from server
     smtpObj.quit()
-
-
