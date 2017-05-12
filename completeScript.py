@@ -38,25 +38,23 @@ if datetime.datetime.today().weekday() != 0:
     cleanest_stuff = json.loads(cleaner_stuff)
 
 
-# Searches JSON for the names in for loop and spits out 'Outbound calls' (as integers) and 'Total Talk Time'
-    for i in range(1040):
-
-        salesRep = cleanest_stuff[i]['category']['categoryName']
-        calls = int(cleanest_stuff[i]['metrics'][4]['value'])
-        talkTime = cleanest_stuff[i]['metrics'][1]['value']
-
-        if salesRep == 'Jay Van Horn':
-            jayList = [salesRep, calls, datetime.time(*map(int, talkTime.split(':')))]
-        if salesRep == 'David New':
-            davidList = [salesRep, calls, datetime.time(*map(int, talkTime.split(':')))]
-        if salesRep == 'Derek Kirchner':
-            derekList = [salesRep, calls, datetime.time(*map(int, talkTime.split(':')))]
-        if salesRep == 'Oliver Haney':
-            oliverList = [salesRep, calls, datetime.time(*map(int, talkTime.split(':')))]
-
-
-    # Need to append this list of lists to Excel sheet 'HDAP'               
-    totalList = [davidList, derekList, jayList, oliverList]
+    # Searches JSON for the names in for loop and spits out 'Outbound calls' (as integers) and 'Total Talk Time'
+    callDataList = []
+    def pullHDAPData(person):
+        for i in range(1040):
+            salesRep = cleanest_stuff[i]['category']['categoryName']
+            calls = int(cleanest_stuff[i]['metrics'][4]['value'])
+            talkTime = cleanest_stuff[i]['metrics'][1]['value']
+        
+            if salesRep == person:
+                individualCallData = [salesRep, calls, datetime.time(*map(int, talkTime.split(':')))]
+                callDataList.append(individualCallData)
+            
+    names = ['Jay Van Horn','David New','Derek Kirchner','Oliver Haney']
+   
+    # call function for each name in names list
+    for name in names:
+        pullHDAPData(name)
 
 # New Outbound Opps from Salesforce
     yesterdayOpps = '00O14000008ywre'
@@ -167,25 +165,23 @@ else:
 
 
 # Searches JSON for the names in for loop and spits out 'Outbound calls' (as integers) and 'Total Talk Time'
-    for i in range(1040):
-
-        salesRep = cleanest_stuff[i]['category']['categoryName']
-        calls = int(cleanest_stuff[i]['metrics'][4]['value'])
-        talkTime = cleanest_stuff[i]['metrics'][1]['value']
-
-        if salesRep == 'Jay Van Horn':
-            jayList = [salesRep, calls, talkTime]
-        if salesRep == 'David New':
-            davidList = [salesRep, calls, talkTime]
-        if salesRep == 'Derek Kirchner':
-            derekList = [salesRep, calls, talkTime]
-        if salesRep == 'Oliver Haney':
-            oliverList = [salesRep, calls, talkTime]
-
-
-    # Need to append this list of lists to Excel sheet 'HDAP'               
-    totalList = [davidList, derekList, jayList, oliverList]
-
+    callDataList = []
+    def pullHDAPData(person):
+        for i in range(1040):
+            salesRep = cleanest_stuff[i]['category']['categoryName']
+            calls = int(cleanest_stuff[i]['metrics'][4]['value'])
+            talkTime = cleanest_stuff[i]['metrics'][1]['value']
+        
+            if salesRep == person:
+                individualCallData = [salesRep, calls, datetime.time(*map(int, talkTime.split(':')))]
+                callDataList.append(individualCallData)
+            
+    names = ['Jay Van Horn','David New','Derek Kirchner','Oliver Haney']
+   
+    # call function for each name in names list
+    for name in names:
+        pullHDAPData(name)
+	
 # New OB Opps from Salesforce    
     manualOpps = '00O14000008ywrj'
     oppsSf = sf.get_report(manualOpps, details=True)
