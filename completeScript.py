@@ -32,7 +32,7 @@ if datetime.datetime.today().weekday() != 0:
     yesterdayDay = yesterday.strftime('%d')
     
     # JSON call data from HDAP
-    url = "https://my.vonagebusiness.com/appserver/rest/usersummarymetricsresource?chartType=summary&startDateInGMT=2017-' + yesterdayMonth + '-' + yesterdayDay + 'T00:00:00Z&endDateInGMT=2017-'+todayMonth+'-'+todayDay+'T00:00:00Z&lineChartType=Total%20Calls&accountId='acctNumber'""
+    url = 'https://my.vonagebusiness.com/appserver/rest/usersummarymetricsresource?chartType=summary&startDateInGMT=2017-' + yesterdayMonth + '-' + yesterdayDay + 'T00:00:00Z&endDateInGMT=2017-'+todayMonth+'-'+todayDay+'T00:00:00Z&lineChartType=Total%20Calls&accountId=YourAccuontNumber'
     stuff = requests.get(url, auth=(username, password)).content
     cleaner_stuff = str(stuff, 'utf-8')
     cleanest_stuff = json.loads(cleaner_stuff)
