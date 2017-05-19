@@ -47,8 +47,41 @@ dollarsDealsQLs = dollarsAndDeals.merge(oppsDFCount2, on='Account Owner')
 # remove column
 dollarsDealsQLs.columns = ['Account Owner',"Total $'s",'# of Deals','# of QLs']
 
-# final chart of with all Outbound reps with their
-# (1) total number of new Opportunities
-# (2) total number of closed Opportunities/Deals
-# (3) total dollar amount of all their closed Opportunities/Deals
-dollarsDealsQLs
+    # today for HDAP
+todayMonth = datetime.datetime.now().strftime('%m')
+todayDay = datetime.datetime.now().strftime('%d')
+
+    #yesterday for HDAP
+yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+yesterdayMonth = yesterday.strftime('%m')
+yesterdayDay = yesterday.strftime('%d')
+    
+    # JSON call data from HDAP
+url = 'https://my.vonagebusiness.com/appserver/rest/usersummarymetricsresource?chartType=summary&startDateInGMT=2017-' + yesterdayMonth + '-' + yesterdayDay + 'T00:00:00Z&endDateInGMT=2017-'+todayMonth+'-'+todayDay+'T00:00:00Z&lineChartType=Total%20Calls&accountId=25016'
+stuff = requests.get(url, auth=(hdapUsername, password)).content
+cleaner_stuff = str(stuff, 'utf-8')
+cleanest_stuff = json.loads(cleaner_stuff)
+
+# Puts call data for specified reps into a list of lists
+callDataList = []
+def pullHDAPData(person):
+    for i in range(1040):
+        salesRep = cleanest_stuff[i]['category']['categoryName']
+        calls = int(cleanest_stuff[i]['metrics'][4]['value'])
+        talkTime = cleanest_stuff[i]['metrics'][1]['value']
+      
+        if salesRep == person:
+            individualCallData = [salesRep, calls, talkTime] #datetime.time(*map(int, talkTime.split(':')))]
+            callDataList.append(individualCallData)
+            
+names = ['Jay Van Horn','David New','Derek Kirchner','Oliver Haney','Matthew Elliott','Kirk Sweeney', 'Dylan Stephens','Marquis Jacox','Jacqueline Momeni']
+
+for name in names:
+	pullHDAPData(name)
+
+callDataDF = pd.DataFrame(callDataList)
+callDataDF.columns = ['Account Owner', 'Follow-ups','Total Talk Time']
+
+
+allDataDF = dollarsDealsQLs.merge(callDataDF, on='Account Owner')
+#htmlDF = allDataDF.to_html()
