@@ -1,0 +1,171 @@
+import requests
+import json
+import openpyxl as xl
+from salesforce_reporting import Connection, ReportParser
+import datetime
+import smtplib
+import numpy as np
+from credentials import login #<--- separate file has credentials in dictionary 'login'
+
+# include any other SDR's name
+names = ['SalesRep FullName','SalesRep FullName2', 'SalesRep FullName3']
+
+# today for HDAP
+todayMonth = datetime.datetime.now().strftime('%m')
+todayDay = datetime.datetime.now().strftime('%d')
+todayMonthDay = (todayMonth + '-' + todayDay)
+todayHour = datetime.datetime.now().strftime('%H')
+todayYear = datetime.datetime.now().strftime('%Y')
+
+yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+yesterdayMonth = yesterday.strftime('%m')
+yesterdayDay = yesterday.strftime('%d')
+yesterdayMonthDay = yesterdayMonth + '-' + yesterdayDay
+yesterdayYear = yesterday.strftime('%Y')
+
+
+callDataList = []
+def pullCallData(person):
+    for i in range(len(jsonData)):
+        salesRep = jsonData[i]['category']['categoryName']
+        calls = int(jsonData[i]['metrics'][4]['value'])
+        obDict = jsonData[i]['metrics'][5]
+        obTalkTime = list(obDict.values())[-1]
+        if salesRep == person:
+            individualCallData = [salesRep, calls, datetime.time(*map(int, obTalkTime.split(':')))]
+            callDataList.append(individualCallData)
+
+# Connects to salesforce allowing reports to be pulled
+sf = Connection(username=login['sfEmail'], password=login['password'], security_token=login['token'])
+
+# Report pulls qualified leads for this month
+mtdQLsReport = '00O140000094IyO'
+mtdRequest = sf.get_report(mtdQLsReport, details=True)
+parserMtd = ReportParser(mtdRequest)
+mtdQLs = parserMtd.records()
+
+# If ran in morning, the report will pull yesterday's data. After 1pm, it will pull today's for midday report
+if int(todayHour) < 13:
+
+    #yesterday for HDAP
+
+    # JSON call data from HDAP
+    url = 'https://fakecallreporting.com/appserver/rest/usersummarymetricsresource?chartType=summary&startDateInGMT=2017-' + yesterdayMonthDay + 'T00:00:00Z&endDateInGMT=2017-'+ todayMonthDay + 'T00:00:00Z&lineChartType=Total%20Calls&accountId=25016'
+    jsonData = requests.get(url, auth=(login['username'], login['password'])).json()
+    
+    # Call function for each name in SDR list
+    for name in names:
+        pullCallData(name)
+
+    yesterdayQLs = '00O14000008yyTZ'
+    yesterdayQLsRequest = sf.get_report(yesterdayQLs, details=True)
+    parserQLs = ReportParser(yesterdayQLsRequest)
+    sdrQLs = parserQLs.records()
+
+    yesterdaySDRclosed = '00O14000008yyU8'
+    closedRequest = sf.get_report(yesterdaySDRclosed, details=True)
+    closedParser = ReportParser(closedRequest)
+    sdrClosed = closedParser.records()
+    for value in sdrClosed:
+        value[4] = value[4].replace("$", "").replace(",","").replace("(","").replace(")","").replace("-","0")
+        value[4] = float(value[4])
+
+        # Open Excel template and insert the lists of data for yesterday
+    xlOpen = xl.load_workbook('/Users/rubinj30/Google Drive/OB Daily Reports/Templates/SDR Daily Morning Template.xlsx')
+
+    # get each sheet and append the list or list of lists. Excel will pull data into existing tables with formulas. 
+    hdapSheet = xlOpen.get_sheet_by_name('HDAP')
+    for data in callDataList:
+        hdapSheet.append(data)
+
+    oppsSheet = xlOpen.get_sheet_by_name('Activity')
+    for data in sdrQLs:
+        oppsSheet.append(data)
+
+    closedSheet = xlOpen.get_sheet_by_name('Closed')
+    for data in sdrClosed:
+    	closedSheet.append(data)
+
+    mtdSheet = xlOpen.get_sheet_by_name('MTD')
+    for data in mtdQLs:
+        mtdSheet.append(data)
+
+
+    # Saves Excel file in shared Google Drive folder
+    xlOpen.save('/Users/rubinj30/google drive/ob daily reports/SDRs/'+yesterdayMonth+'-'+yesterdayYear+'/'+yesterdayMonthDay+' SDR Morning.xlsx')
+
+    
+    # Connects to e-mail
+    smtpObj = smtplib.SMTP('smtp.gmail.com', 587)
+    smtpObj.ehlo()
+    smtpObj.starttls()
+
+    smtpObj.login('my@email.com', login['gmailPassword'])
+    #can use list of strings for multiple email addresses. save as object and replace singular email
+
+    hyperlinkDrive = 'https://drive.google.com/drive/folders/0ByBUMjHVt7glR05NT29zRklhTWc'
+    recipients = ['my@email.com','others@email.com']
+    smtpObj.sendmail('my@email.com',recipients,
+        "Subject: OB SDR Report "+yesterdayMonthDay+"\nHere you can find the OB SDR report for yesterday:\n\n" + hyperlinkDrive + "\n\nYou can open it with Excel or Google Sheets.\n\nThanks")
+
+    #disconnects from server
+    smtpObj.quit()
+
+else:
+    
+    url = 'https://fakecallreporting.com/appserver/rest/usersummarymetricsresource?chartType=summary&startDateInGMT=2017-' + todayMonthDay + 'T00:00:00Z&endDateInGMT=2017-'+ todayMonthDay + 'T20:00:00Z&lineChartType=Total%20Calls&accountId=25016'
+    jsonData = requests.get(url, auth=(login['username'], login['password'])).json() 
+    
+    for name in names:
+        pullCallData(name)
+
+    todayQLs = '00O140000094HmH'
+    todayQLsRequest = sf.get_report(todayQLs, details=True)
+    parserQLs = ReportParser(todayQLsRequest)
+    sdrQLs = parserQLs.records()
+    
+    todaySDRclosed = '00O140000094Hnj'
+    closedRequest = sf.get_report(todaySDRclosed, details=True)
+    closedParser = ReportParser(closedRequest)
+    sdrClosed = closedParser.records()
+    for value in sdrClosed:
+        value[4] = value[4].replace('$','').replace(',','').replace("(","").replace(")","").replace("-","0")
+        value[4] = float(value[4])
+
+    xlOpen = xl.load_workbook('/Users/rubinj30/Google Drive/OB Daily Reports/Templates/SDR Daily Afternoon Template.xlsx')
+
+    hdapSheet = xlOpen.get_sheet_by_name('HDAP')
+    for data in callDataList:
+        hdapSheet.append(data)
+
+    oppsSheet = xlOpen.get_sheet_by_name('Activity')
+    for data in sdrQLs:
+        oppsSheet.append(data)
+
+    closedSheet = xlOpen.get_sheet_by_name('Closed')
+    for data in sdrClosed:
+        closedSheet.append(data)
+
+    mtdSheet = xlOpen.get_sheet_by_name('MTD')
+    for data in mtdQLs:
+        mtdSheet.append(data)
+
+    xlOpen.save('/Users/rubinj30/Google Drive/OB Daily Reports/SDRs/' + todayMonth + '-'+ todayYear + '/' + todayMonthDay + ' SDR Afternoon.xlsx')
+
+
+    smtpObj = smtplib.SMTP('smtp.gmail.com', 587)
+    smtpObj.ehlo()
+    smtpObj.starttls()
+
+    smtpObj.login('my@email.com', login['gmailPassword'])
+    #can use list of strings for multiple email addresses. save as object and replace singular email
+
+    hyperlinkDrive = 'https://drive.google.com/drive/folders/0ByBUMjHVt7glR05NT29zRklhTWc'
+    recipients = ['my@email.com','others@email.com']
+    smtpObj.sendmail('my@email.com',recipients,
+        "Subject: Afternoon OB SDR Report "+todayMonthDay+"\nHere you can find the OB SDR report for yesterday:\n\n" + hyperlinkDrive + "\n\nYou can open it with Excel or Google Sheets.\n\nThanks")
+
+
+
+
+
