@@ -6,16 +6,14 @@ import datetime
 import smtplib
 from credentials import login
 
-# SF connection
 sf = Connection(username=login['sfEmail'], password=login['password'], security_token=login['token'])
 
 excel_report_template = xl.load_workbook('/Users/rubinj30/Google Drive/OB Sales Reports/OB-ISR-template.xlsx')
 
-# today for HDAP
+# get variables for API call and labeling Excel files
 today_month = datetime.datetime.now().strftime('%m')
 today_day = datetime.datetime.now().strftime('%d')
-
-# yesterday for HDAP
+today_month_day = today_month + today_day
 yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
 yesterday_month = yesterday.strftime('%m')
 yesterday_day = yesterday.strftime('%d')
@@ -92,4 +90,4 @@ sf_report_to_sheet_and_edit_type('00O1O0000086fvQ', "Total MTD $'s")
 # enter drive link for specific team
 send_email_notification_with_link('https://drive.google.com/drive/folders/outbound')
 
-excel_report_template.save('/Users/rubinj30/Google Drive/OB Daily Reports/OB ISR Daily Reports.xlsx')
+excel_report_template.save(f'/Users/rubinj30/Google Drive/OB Daily Reports/OB ISR Daily - {today_month_day}.xlsx')
