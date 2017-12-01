@@ -9,36 +9,36 @@ from credentials import login
 # SF connection
 sf = Connection(username=login['sfEmail'], password=login['password'], security_token=login['token'])
 
-excel_report_template = xl.load_workbook('/Users/rubinj30/Google Drive/OB Daily Reports/Templates/OB-ISR-template-TEST.xlsx')
+excel_report_template = xl.load_workbook('/Users/rubinj30/Google Drive/OB Sales Reports/OB-ISR-template.xlsx')
 
 # today for HDAP
-todayMonth = datetime.datetime.now().strftime('%m')
-todayDay = datetime.datetime.now().strftime('%d')
+today_month = datetime.datetime.now().strftime('%m')
+today_day = datetime.datetime.now().strftime('%d')
 
 # yesterday for HDAP
 yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
-yesterdayMonth = yesterday.strftime('%m')
-yesterdayDay = yesterday.strftime('%d')
-yesterdayYear = yesterday.strftime('%Y')
-yesterdayMonthDay = yesterdayMonth + '-' + yesterdayDay
+yesterday_month = yesterday.strftime('%m')
+yesterday_day = yesterday.strftime('%d')
+yesterday_year = yesterday.strftime('%Y')
+yesterday_month_day = yesterday_month + '-' + yesterday_day
 
 call_data_list = []
 names = ['first_name last_name', 'first_name last_name', 'first_name last_name', 'first_name last_name', 'first_name last_name']
-url = 'https://my.vonagebusiness.com/appserver/rest/usersummarymetricsresource?chartType=summary&startDateInGMT=2017-' + yesterdayMonthDay + 'T00:00:00Z&endDateInGMT=2017-'+todayMonth+'-'+todayDay+'T00:00:00Z&lineChartType=Total%20Calls&accountId=25016'
-jsonData = requests.get(url, auth=(login['username'], login['password'])).json()
+url_for_api_call = f'https://my.vonagebusiness.com/appserver/rest/usersummarymetricsresource?chartType=summary&startDateInGMT=2017-{yesterday_month_day}T00:00:00Z&endDateInGMT=2017-{today_month+}-{today_day}T00:00:00Z&lineChartType=Total%20Calls&accountId=25016'
+json_call_data = requests.get(url_for_api_call, auth=(login['username'], login['password'])).json()
 
 
-def pull_hdap_data(person):
-    for i in range(len(jsonData)):
-        salesRep = jsonData[i]['category']['categoryName']
-        calls = int(jsonData[i]['metrics'][4]['value'])
-        talkTime = jsonData[i]['metrics'][1]['value']
+def pull_number_of_calls_and_talk_time(person):
+    for i in range(len(json_call_data)):
+        salesRep = json_call_data[i]['category']['categoryName']
+        calls = int(json_call_data[i]['metrics'][4]['value'])
+        talkTime = json_call_data[i]['metrics'][1]['value']
         if salesRep == person:
             indiv_call_data = [salesRep, calls, datetime.time(*map(int, talkTime.split(':')))]
             call_data_list.append(indiv_call_data)
 
 for name in names:
-    pull_hdap_data(name)
+    pull_number_of_calls_and_talk_time(name)
 
 
 def append_hdap_to_excel_sheet(sheet_name):
@@ -71,10 +71,10 @@ def send_email_notification_with_link(google_drive_link):
     smtpObj.login('jonathan.rubin@vonage.com', login['gmailPassword'])
 
     # can use list of strings for multiple email addresses. save as object and replace singular email
-    recipients = ['recipient@email.com', 'recipient2@email.com']
+    recipients = ['recipient@email.com', 'recipient2@email.com', 'recipient3@email.com']
     smtpObj.sendmail('myemail@email.com', recipients,
-                     "Subject: Refactor Test " + yesterdayMonth + "-" + yesterdayDay +
-                     "\nHere you can find the Closer report for yesterday:\n\n" + google_drive_link +
+                     f"Subject: Refactor Test {yesterday_month}-{yesterday_day}" +
+                     f"\nHere you can find the Closer report for yesterday:\n\n{google_drive_link}" +
                      "\n\nYou can open it with Excel or Google Sheets.\n\nThanks,\nJonathan")
 
     # disconnects from server
@@ -92,4 +92,4 @@ sf_report_to_sheet_and_edit_type('00O1O0000086fvQ', "Total MTD $'s")
 # enter drive link for specific team
 send_email_notification_with_link('https://drive.google.com/drive/folders/outbound')
 
-excel_report_template.save('/Users/rubinj30/Google Drive/OB Daily Reports/Templates/refactor-test-xl2.xlsx')
+excel_report_template.save('/Users/rubinj30/Google Drive/OB Daily Reports/OB ISR Daily Reports.xlsx')
