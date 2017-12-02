@@ -1,7 +1,7 @@
 # automate-sales-reporting
 
 ## Purpose
-This runs each monrning automatically and e-mails the specified Supervisors with their reports to send out to their teams. The formulas are done in Excel, so that Supervisors can add/remove items if the Salesforce data is incorrect prior to sending. 
+This runs each morning automatically and e-mails the specified Supervisors with their reports to send out to their teams. The formulas are done in Excel, so that Supervisors can add/remove items if the Salesforce data is incorrect prior to sending. 
 
 ## How it works
 It uses a salesforce API to pull the previous days qualified leads taken and deals closed, as well a Vonage Business calling platform API for call activity.
