@@ -10,16 +10,16 @@ While all this seems pretty easy looking back, it was difficult at the time. But
 In the end, this and similar scripts were being run automatically each morning by Windows Task Manager. It replaced the daily (and in some cases bi-daily) reporting responsibilities for 4 different sales managers/supervisors each pulling anywhere from 3 to 8 different reports from 2 different sources. The total number of sales reps reported on was over 100. 
 
 ## Refactor
-Once I learned about functional programming, I came back and refactored with this technique. As far as I know, these are still running each morning via Windows Task Manager. 
+Once I learned about functional programming, I came back and refactored with this technique, as well as refactored variable names to be as readable as comments. As far as I know, these scripts are still running each morning via Windows Task Manager.
 
 ## Technologies used
 ### python libraries
-- requests for the api call
-- json to work with JSON data
-- openpyxl to work with Excel 
-- salesforce_reporting library
-- datetime
-- smtplib to send e-mails
+- _requests_ for the api call
+- _json_ to work with JSON data
+- _openpyxl_ to work with Excel 
+- _salesforce_reporting_, which is basically a wrapper for an API call to salesforce
+- _datetime_
+- _smtplib_ to send e-mails
 
 ### API
 an API for call data from the company's calling platform
